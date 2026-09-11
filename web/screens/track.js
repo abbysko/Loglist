@@ -17,6 +17,12 @@
     window.dispatchEvent(new CustomEvent('ot-tracking-state-changed'));
   }
 
+  function notifyLiveActivity(payload) {
+    const handler = window.webkit?.messageHandlers?.liveActivity;
+    if (!handler || typeof handler.postMessage !== 'function') return;
+    handler.postMessage(payload);
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -232,10 +238,20 @@
     }
 
     if (options.resetCounts) clearTrackCounts(list.id);
+    const counts = readTrackCounts(list.id);
+    notifyLiveActivity({
+      action: 'start',
+      listName: list.name,
+      observedCount: Object.values(counts).filter(
+        (count) => Number(count || 0) > 0
+      ).length,
+      totalCount: Array.isArray(list.items) ? list.items.length : 0,
+    });
     emitTrackingStateChanged();
   }
 
   function clearActiveTrackingList() {
+    notifyLiveActivity({ action: 'end' });
     sessionStorage.removeItem('ot_active_list_id');
     sessionStorage.removeItem('ot_active_list_name');
     sessionStorage.removeItem('ot_list_action');
@@ -713,6 +729,11 @@
         setUndoEnabled(undoStack.length > 0);
 
         writeTrackCounts(list?.id, counts);
+        notifyLiveActivity({
+          action: 'update',
+          observedCount,
+          totalCount,
+        });
 
         const grid = btn.closest('.track-grid');
         scheduleTrackGridReorder(grid);
