@@ -28,6 +28,14 @@ final class LiveActivityManager {
         )
 
         Task {
+            if let existingActivity = Activity<LoglistLiveActivityAttributes>.activities.first {
+                activity = existingActivity
+                await existingActivity.update(
+                    ActivityContent(state: state, staleDate: nil)
+                )
+                return
+            }
+
             do {
                 activity = try Activity.request(
                     attributes: attributes,
@@ -41,7 +49,10 @@ final class LiveActivityManager {
     }
 
     func update(observedCount: Int, totalCount: Int) {
-        guard let activity else { return }
+        guard let activity = activity ?? Activity<LoglistLiveActivityAttributes>.activities.first else {
+            return
+        }
+        self.activity = activity
         let state = LoglistLiveActivityAttributes.ContentState(
             observedCount: observedCount,
             totalCount: totalCount
@@ -53,7 +64,9 @@ final class LiveActivityManager {
     }
 
     func end() {
-        guard let activity else { return }
+        guard let activity = activity ?? Activity<LoglistLiveActivityAttributes>.activities.first else {
+            return
+        }
         self.activity = nil
 
         Task {

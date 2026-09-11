@@ -132,9 +132,9 @@
 
   function startSessionForList(list) {
     if (!list) return false;
-    sessionStorage.setItem('ot_active_list_id', list.id);
-    sessionStorage.setItem('ot_active_list_name', list.name);
-    sessionStorage.setItem('ot_list_action', 'start-track');
+    localStorage.setItem('ot_active_list_id', list.id);
+    localStorage.setItem('ot_active_list_name', list.name);
+    localStorage.setItem('ot_list_action', 'start-track');
     if (window._obs && typeof window._obs.setScreen === 'function') {
       window._obs.setScreen('track', {
         routeParams: {

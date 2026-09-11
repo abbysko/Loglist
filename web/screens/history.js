@@ -465,19 +465,19 @@
 
     const seedCounts = buildSeedCountsForRestart(list, session);
 
-    sessionStorage.setItem('ot_active_list_id', list.id);
-    sessionStorage.setItem('ot_active_list_name', list.name);
-    sessionStorage.setItem('ot_list_action', 'start-track');
-    sessionStorage.setItem(
+    localStorage.setItem('ot_active_list_id', list.id);
+    localStorage.setItem('ot_active_list_name', list.name);
+    localStorage.setItem('ot_list_action', 'start-track');
+    localStorage.setItem(
       'ot_restart_history_session_id',
       String(session?.id || '')
     );
-    sessionStorage.setItem(
+    localStorage.setItem(
       'ot_restart_history_session_name',
       getSessionName(session, '')
     );
-    sessionStorage.setItem('ot_restart_history_list_id', String(list.id || ''));
-    sessionStorage.setItem(
+    localStorage.setItem('ot_restart_history_list_id', String(list.id || ''));
+    localStorage.setItem(
       `ot_track_counts_v1_${list.id}`,
       JSON.stringify(seedCounts)
     );
