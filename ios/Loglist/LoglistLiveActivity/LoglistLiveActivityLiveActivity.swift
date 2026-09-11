@@ -37,7 +37,7 @@ struct LoglistLiveActivityLiveActivity: Widget {
                     .font(.headline)
                     .lineLimit(1)
 
-                Text("Currently tracking items from \(context.attributes.listName)")
+                Text("Tracking items from \(context.attributes.listName)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
