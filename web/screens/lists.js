@@ -921,9 +921,10 @@
       });
     }
 
-    // default: built-in first (alpha), then custom (alpha)
+    // default: built-in first (builtins.json order), then custom (alpha)
     return out.sort((a, b) => {
       if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
+      if (a.builtIn && b.builtIn) return 0; // preserve builtins.json order
       return byName(a, b);
     });
   }
