@@ -351,7 +351,8 @@
         .replace(/^-|-$/g, '') || 'session'
     }-observations.csv`;
     const csv = buildSessionCsv(session);
-    const downloadHandler = window.webkit?.messageHandlers?.downloadSession || null;
+    const downloadHandler =
+      window.webkit?.messageHandlers?.downloadSession || null;
 
     if (downloadHandler) {
       downloadHandler.postMessage({ filename, csv });
@@ -931,7 +932,9 @@
       });
     }
 
-    const downloadButton = container.querySelector('[data-header-action="download"]');
+    const downloadButton = container.querySelector(
+      '[data-header-action="download"]'
+    );
     if (downloadButton) {
       downloadButton.addEventListener('click', () => {
         downloadSessionCsv(session);
