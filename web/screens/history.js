@@ -343,7 +343,7 @@
     return rows.map((row) => row.map(escapeCsv).join(',')).join('\r\n');
   }
 
-  function shareSessionCsv(session) {
+  function downloadSessionCsv(session) {
     const filename = `${
       getSessionName(session, 'session')
         .trim()
@@ -351,10 +351,10 @@
         .replace(/^-|-$/g, '') || 'session'
     }-observations.csv`;
     const csv = buildSessionCsv(session);
-    const shareHandler = window.webkit?.messageHandlers?.shareSession || null;
+    const downloadHandler = window.webkit?.messageHandlers?.downloadSession || null;
 
-    if (shareHandler) {
-      shareHandler.postMessage({ filename, csv });
+    if (downloadHandler) {
+      downloadHandler.postMessage({ filename, csv });
       return;
     }
 
@@ -749,7 +749,7 @@
         }
 
         if (action === 'download') {
-          shareSessionCsv(target);
+          downloadSessionCsv(target);
           return;
         }
       });
@@ -841,8 +841,8 @@
           <button class="header-button-secondary" type="button" data-header-action="delete" aria-label="Delete this session">
             <i data-feather="trash"></i>
           </button>
-          <button class="header-button-secondary" type="button" data-header-action="share" aria-label="Share session as CSV">
-            <i data-feather="share"></i>
+          <button class="header-button-secondary" type="button" data-header-action="download" aria-label="Download session as CSV">
+            <i data-feather="download"></i>
           </button>
           <button class="header-button-primary history-detail-restart" type="button" aria-label="Restart tracking from this session">
             <i data-feather="play"></i>
@@ -931,10 +931,10 @@
       });
     }
 
-    const shareButton = container.querySelector('[data-header-action="share"]');
-    if (shareButton) {
-      shareButton.addEventListener('click', () => {
-        shareSessionCsv(session);
+    const downloadButton = container.querySelector('[data-header-action="download"]');
+    if (downloadButton) {
+      downloadButton.addEventListener('click', () => {
+        downloadSessionCsv(session);
       });
     }
 
