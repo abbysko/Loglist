@@ -51,31 +51,35 @@
 
     trackGridReorderTimeout = setTimeout(() => {
       trackGridReorderTimeout = null;
-      if (!grid || !grid.isConnected) return;
+      const activeGrid = grid?.isConnected
+        ? grid
+        : container.querySelector('.track-grid');
+      if (!activeGrid) return;
 
-      const buttons = Array.from(grid.querySelectorAll('.track-grid-button'));
-      buttons
-        .sort((a, b) => {
-          const countDifference =
-            Number(b.getAttribute('data-count') || 0) -
-            Number(a.getAttribute('data-count') || 0);
-          if (countDifference !== 0) return countDifference;
+      const buttons = Array.from(
+        activeGrid.querySelectorAll('.track-grid-button')
+      );
+      const orderMode = activeGrid.getAttribute('data-order-mode');
+      buttons.sort((a, b) => {
+        const countDifference =
+          Number(b.getAttribute('data-count') || 0) -
+          Number(a.getAttribute('data-count') || 0);
+        if (countDifference !== 0) return countDifference;
 
-          const orderMode = grid.getAttribute('data-order-mode');
-          if (orderMode === 'custom') {
-            return (
-              Number(a.getAttribute('data-item-order') || 0) -
-              Number(b.getAttribute('data-item-order') || 0)
-            );
-          }
-
-          return String(a.getAttribute('data-item-label') || '').localeCompare(
-            String(b.getAttribute('data-item-label') || ''),
-            undefined,
-            { sensitivity: 'base' }
+        if (orderMode === 'custom') {
+          return (
+            Number(a.getAttribute('data-item-order') || 0) -
+            Number(b.getAttribute('data-item-order') || 0)
           );
-        })
-        .forEach((button) => grid.appendChild(button));
+        }
+
+        return String(a.getAttribute('data-item-label') || '').localeCompare(
+          String(b.getAttribute('data-item-label') || ''),
+          undefined,
+          { sensitivity: 'base' }
+        );
+      });
+      activeGrid.replaceChildren(...buttons);
     }, TRACK_GRID_REORDER_DELAY_MS);
   }
 
@@ -738,7 +742,7 @@
         notifyLiveActivity({
           action: 'update',
           observedCount,
-          totalCount,
+          totalCount: totalItems,
         });
 
         const grid = btn.closest('.track-grid');
