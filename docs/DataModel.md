@@ -37,6 +37,7 @@ Notes:
 - Custom lists are stored alongside built-ins in `localStorage` under the `ot_lists_v1` key.
 - A custom list is created by duplicating a built-in list and marking the new item as `builtIn: false`.
 - Custom lists default to `displayOrderMode: "alphabetical"`, where item names are shown and inserted alphabetically case-insensitively. In `custom` mode, manual item ordering is preserved and new items are appended.
+- On the Lists screen, the "Default Order" sort shows built-in lists in the same order they appear in the `lists` array in `builtins.json`, followed by custom lists alphabetically. Reordering entries in `builtins.json` is the intended way to control built-in list order.
 
 ### Item
 
@@ -98,7 +99,7 @@ Notes:
 
 ### Active tracking state
 
-The live tracking session is not stored as a single session object in the repository while the session is active. Instead, the app uses browser session storage to hold transient values such as:
+The live tracking session is not stored as a single session object in the repository while the session is active. Instead, the app uses browser `localStorage` to hold transient values such as:
 
 - active list id
 - active list name
@@ -124,6 +125,6 @@ The current implementation is intentionally simple:
 
 - List data is a plain object array.
 - History data is a plain array of session objects.
-- Active tracking state is stored in `sessionStorage` instead of a full in-memory session model.
+- Active tracking state is stored in `localStorage` instead of a full in-memory session model, so it survives the app being backgrounded or terminated.
 
 This is sufficient for the current prototype and keeps the app easy to reason about while the repository abstraction remains lightweight.

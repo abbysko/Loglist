@@ -67,11 +67,6 @@
 			path = LoglistLiveActivity;
 			sourceTree = "<group>";
 		};
-		9E842090303A2FFE0096F7FD /* Shared */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Shared;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,7 +96,6 @@
 				9E84207E303A2FD10096F7FD /* LoglistLiveActivity */,
 				9E842079303A2FD00096F7FD /* Frameworks */,
 				9E842067303A2F6F0096F7FD /* Products */,
-				9E842090303A2FFE0096F7FD /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -143,7 +137,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				9E842068303A2F6F0096F7FD /* Loglist */,
-				9E842090303A2FFE0096F7FD /* Shared */,
 			);
 			name = Loglist;
 			packageProductDependencies = (
