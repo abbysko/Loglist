@@ -45,6 +45,7 @@ Out of scope:
 - [Discarded] Saved sessions are immutable (read-only).
   - Note: I decided to allow users to "restart" a saved session and modify it from there.
 - [Implemented] For each saved session, users can view the observations that were recorded.
+- [Implemented] Users can export session data out of the app to use in other applications.
 
 ## Tracking
 
@@ -54,12 +55,14 @@ Out of scope:
   - NOTE: as implemented, the app allows adding items to built-in lists - these are duplicated to create custom lists to which the new item is added.
 - [Partial] Users may decrement observation counts to remedy mistaken observations.
   - NOTE: as implemented, the app currently provides only an undo action with a history of the last 10 observations.
+- [Implemented] The app makes it clear when a tracking session is still active, both within the app and when the user has navigated away from the app.
 
 ## Non-functional Requirements
 
 - [Partial] Data persistence should be handled through a dedicated interface that can support different backend models, e.g. browser storage versus an iOS-native store.
 - [Partial] Tap interactions and screen updates should feel immediate and remain smooth during normal use.
 - [Partial] The UI should remain usable on small phones and larger screens without breaking the main flows.
+  - NOTE: Focus is mobile, iOS form factor only. Demo runs in browser and looks OK on large monitor, but that is not the priority.
 - [Partial] Accessibility should include clear labels, adequate touch targets, good contrast, and screen-reader-friendly controls where applicable.
 - [Partial] The app should handle storage failures, missing assets, and save errors gracefully.
 - [Implemented] Theme selection should persist, follow system preference when unset, and support explicit light/dark overrides.

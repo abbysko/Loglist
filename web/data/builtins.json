@@ -2,7 +2,7 @@
   "lists": [
     {
       "id": "builtin-us-states",
-      "name": "US States & Territories",
+      "name": "US States & Terr.",
       "builtIn": true,
       "items": [
         { "id": "al", "name": "Alabama" },
@@ -193,7 +193,7 @@
     },
     {
       "id": "builtin-canadian-provinces-territories",
-      "name": "Canadian Provinces & Territories",
+      "name": "Canadian Provinces & Terr.",
       "builtIn": true,
       "items": [
         { "id": "ab", "name": "Alberta" },

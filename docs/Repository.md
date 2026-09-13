@@ -25,7 +25,7 @@ The browser implementation currently stores:
 
 - built-in and custom lists in `localStorage` under `ot_lists_v1`
 - saved history in `localStorage` under `ot_history_v1`
-- active tracking state in `sessionStorage` while a session is running
+- active tracking state in `localStorage` while a session is running, so it survives the app being backgrounded or terminated
 
 This is intentionally minimal and aligned with the current milestone-driven prototype. The repository wrapper does not yet use IndexedDB, and no native bridge is present yet.
 
