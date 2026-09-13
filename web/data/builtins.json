@@ -2,7 +2,7 @@
   "lists": [
     {
       "id": "builtin-us-states",
-      "name": "U.S. States & Territories",
+      "name": "US States & Territories",
       "builtIn": true,
       "items": [
         { "id": "al", "name": "Alabama" },
