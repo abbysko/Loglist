@@ -17,6 +17,12 @@
     window.dispatchEvent(new CustomEvent('ot-tracking-state-changed'));
   }
 
+  function notifyLiveActivity(payload) {
+    const handler = window.webkit?.messageHandlers?.liveActivity;
+    if (!handler || typeof handler.postMessage !== 'function') return;
+    handler.postMessage(payload);
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -45,31 +51,35 @@
 
     trackGridReorderTimeout = setTimeout(() => {
       trackGridReorderTimeout = null;
-      if (!grid || !grid.isConnected) return;
+      const activeGrid = grid?.isConnected
+        ? grid
+        : container.querySelector('.track-grid');
+      if (!activeGrid) return;
 
-      const buttons = Array.from(grid.querySelectorAll('.track-grid-button'));
-      buttons
-        .sort((a, b) => {
-          const countDifference =
-            Number(b.getAttribute('data-count') || 0) -
-            Number(a.getAttribute('data-count') || 0);
-          if (countDifference !== 0) return countDifference;
+      const buttons = Array.from(
+        activeGrid.querySelectorAll('.track-grid-button')
+      );
+      const orderMode = activeGrid.getAttribute('data-order-mode');
+      buttons.sort((a, b) => {
+        const countDifference =
+          Number(b.getAttribute('data-count') || 0) -
+          Number(a.getAttribute('data-count') || 0);
+        if (countDifference !== 0) return countDifference;
 
-          const orderMode = grid.getAttribute('data-order-mode');
-          if (orderMode === 'custom') {
-            return (
-              Number(a.getAttribute('data-item-order') || 0) -
-              Number(b.getAttribute('data-item-order') || 0)
-            );
-          }
-
-          return String(a.getAttribute('data-item-label') || '').localeCompare(
-            String(b.getAttribute('data-item-label') || ''),
-            undefined,
-            { sensitivity: 'base' }
+        if (orderMode === 'custom') {
+          return (
+            Number(a.getAttribute('data-item-order') || 0) -
+            Number(b.getAttribute('data-item-order') || 0)
           );
-        })
-        .forEach((button) => grid.appendChild(button));
+        }
+
+        return String(a.getAttribute('data-item-label') || '').localeCompare(
+          String(b.getAttribute('data-item-label') || ''),
+          undefined,
+          { sensitivity: 'base' }
+        );
+      });
+      activeGrid.replaceChildren(...buttons);
     }, TRACK_GRID_REORDER_DELAY_MS);
   }
 
@@ -80,7 +90,7 @@
   function readTrackCounts(listId) {
     if (!listId) return {};
     try {
-      const raw = sessionStorage.getItem(getCountStorageKey(listId));
+      const raw = localStorage.getItem(getCountStorageKey(listId));
       const parsed = raw ? JSON.parse(raw) : {};
       return parsed && typeof parsed === 'object' ? parsed : {};
     } catch (err) {
@@ -92,10 +102,7 @@
   function writeTrackCounts(listId, counts) {
     if (!listId) return;
     try {
-      sessionStorage.setItem(
-        getCountStorageKey(listId),
-        JSON.stringify(counts)
-      );
+      localStorage.setItem(getCountStorageKey(listId), JSON.stringify(counts));
     } catch (err) {
       console.warn('Failed to save track counts', err);
     }
@@ -103,7 +110,7 @@
 
   function clearTrackCounts(listId) {
     if (!listId) return;
-    sessionStorage.removeItem(getCountStorageKey(listId));
+    localStorage.removeItem(getCountStorageKey(listId));
   }
 
   function normalizeTrackItems(list) {
@@ -180,12 +187,12 @@
 
   function setActiveSessionName(name) {
     const nextName = String(name || '').trim();
-    sessionStorage.setItem(ACTIVE_SESSION_NAME_KEY, nextName);
+    localStorage.setItem(ACTIVE_SESSION_NAME_KEY, nextName);
   }
 
   function getActiveSessionName(fallbackName) {
     const stored = String(
-      sessionStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
+      localStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
     ).trim();
     if (stored) return stored;
 
@@ -199,21 +206,21 @@
   function setActiveTrackingList(list, options = {}) {
     const listId = String(list?.id || '');
     const previousListId = String(
-      sessionStorage.getItem('ot_active_list_id') || ''
+      localStorage.getItem('ot_active_list_id') || ''
     );
     const previousSessionName = String(
-      sessionStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
+      localStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
     ).trim();
 
-    sessionStorage.setItem('ot_active_list_id', list.id);
-    sessionStorage.setItem('ot_active_list_name', list.name);
-    sessionStorage.setItem('ot_list_action', 'start-track');
+    localStorage.setItem('ot_active_list_id', list.id);
+    localStorage.setItem('ot_active_list_name', list.name);
+    localStorage.setItem('ot_list_action', 'start-track');
 
     const restartSessionName = String(
-      sessionStorage.getItem('ot_restart_history_session_name') || ''
+      localStorage.getItem('ot_restart_history_session_name') || ''
     ).trim();
     const restartListId = String(
-      sessionStorage.getItem('ot_restart_history_list_id') || ''
+      localStorage.getItem('ot_restart_history_list_id') || ''
     ).trim();
 
     const nextSessionName = String(
@@ -232,17 +239,27 @@
     }
 
     if (options.resetCounts) clearTrackCounts(list.id);
+    const counts = readTrackCounts(list.id);
+    notifyLiveActivity({
+      action: 'start',
+      listName: list.name,
+      observedCount: Object.values(counts).filter(
+        (count) => Number(count || 0) > 0
+      ).length,
+      totalCount: Array.isArray(list.items) ? list.items.length : 0,
+    });
     emitTrackingStateChanged();
   }
 
   function clearActiveTrackingList() {
-    sessionStorage.removeItem('ot_active_list_id');
-    sessionStorage.removeItem('ot_active_list_name');
-    sessionStorage.removeItem('ot_list_action');
-    sessionStorage.removeItem(ACTIVE_SESSION_NAME_KEY);
-    sessionStorage.removeItem('ot_restart_history_session_id');
-    sessionStorage.removeItem('ot_restart_history_session_name');
-    sessionStorage.removeItem('ot_restart_history_list_id');
+    notifyLiveActivity({ action: 'end' });
+    localStorage.removeItem('ot_active_list_id');
+    localStorage.removeItem('ot_active_list_name');
+    localStorage.removeItem('ot_list_action');
+    localStorage.removeItem(ACTIVE_SESSION_NAME_KEY);
+    localStorage.removeItem('ot_restart_history_session_id');
+    localStorage.removeItem('ot_restart_history_session_name');
+    localStorage.removeItem('ot_restart_history_list_id');
     editingActiveSessionName = false;
     chooserMenuOpen = false;
     emitTrackingStateChanged();
@@ -250,16 +267,16 @@
 
   function buildSessionEntry(list, normalized, counts) {
     const restartSessionId = String(
-      sessionStorage.getItem('ot_restart_history_session_id') || ''
+      localStorage.getItem('ot_restart_history_session_id') || ''
     ).trim();
     const restartSessionName = String(
-      sessionStorage.getItem('ot_restart_history_session_name') || ''
+      localStorage.getItem('ot_restart_history_session_name') || ''
     ).trim();
     const restartListId = String(
-      sessionStorage.getItem('ot_restart_history_list_id') || ''
+      localStorage.getItem('ot_restart_history_list_id') || ''
     ).trim();
     const activeSessionName = String(
-      sessionStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
+      localStorage.getItem(ACTIVE_SESSION_NAME_KEY) || ''
     ).trim();
     const isRestartSave =
       !!restartSessionId && restartListId === String(list.id);
@@ -382,10 +399,10 @@
 
   function renderActiveState(list) {
     const restartSessionName = String(
-      sessionStorage.getItem('ot_restart_history_session_name') || ''
+      localStorage.getItem('ot_restart_history_session_name') || ''
     ).trim();
     const restartListId = String(
-      sessionStorage.getItem('ot_restart_history_list_id') || ''
+      localStorage.getItem('ot_restart_history_list_id') || ''
     ).trim();
     const fallbackSessionName =
       restartSessionName && restartListId === String(list?.id || '')
@@ -396,6 +413,15 @@
     const normalized = normalizeTrackItems(list);
     const counts = readTrackCounts(list?.id);
     const totalItems = normalized.length;
+    notifyLiveActivity({
+      action: 'start',
+      listName: list?.name || 'Loglist',
+      observedCount: normalized.reduce(
+        (sum, item) => sum + (Number(counts[item.key] || 0) > 0 ? 1 : 0),
+        0
+      ),
+      totalCount: totalItems,
+    });
     const undoStack = [];
     let observedCount = normalized.reduce(
       (sum, item) => sum + (Number(counts[item.key] || 0) > 0 ? 1 : 0),
@@ -507,7 +533,7 @@
           const normalizedName = normalizeRenameValue(value);
           if (!normalizedName.ok) return normalizedName;
           const restartSessionId = String(
-            sessionStorage.getItem('ot_restart_history_session_id') || ''
+            localStorage.getItem('ot_restart_history_session_id') || ''
           ).trim();
           const existingSessions =
             window.repository &&
@@ -713,6 +739,11 @@
         setUndoEnabled(undoStack.length > 0);
 
         writeTrackCounts(list?.id, counts);
+        notifyLiveActivity({
+          action: 'update',
+          observedCount,
+          totalCount: totalItems,
+        });
 
         const grid = btn.closest('.track-grid');
         scheduleTrackGridReorder(grid);
@@ -857,9 +888,9 @@
   async function renderTrackState() {
     const lists = await window.repository.loadLists();
     applyRouteState(lists);
-    const activeId = sessionStorage.getItem('ot_active_list_id');
-    const activeName = sessionStorage.getItem('ot_active_list_name');
-    const action = sessionStorage.getItem('ot_list_action');
+    const activeId = localStorage.getItem('ot_active_list_id');
+    const activeName = localStorage.getItem('ot_active_list_name');
+    const action = localStorage.getItem('ot_list_action');
 
     if (action === 'start-track' && (activeId || activeName)) {
       const match = activeId ? lists.find((x) => x.id === activeId) : null;

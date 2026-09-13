@@ -283,9 +283,9 @@ let state = {
 };
 
 function getActiveTrackingState() {
-  const action = sessionStorage.getItem('ot_list_action');
-  const activeId = sessionStorage.getItem('ot_active_list_id');
-  const activeName = sessionStorage.getItem('ot_active_list_name');
+  const action = localStorage.getItem('ot_list_action');
+  const activeId = localStorage.getItem('ot_active_list_id');
+  const activeName = localStorage.getItem('ot_active_list_name');
   const isActive = action === 'start-track' && !!(activeId || activeName);
   return {
     isActive,
@@ -439,6 +439,7 @@ initDetailBreadcrumbAutoFit();
 
 loadRepository()
   .then(() => {
+    if (getActiveTrackingState().isActive) state.current = 'track';
     setScreen(state.current, { skipUrlSync: true, silentLock: true });
   })
   .catch((err) => {

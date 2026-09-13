@@ -1,6 +1,79 @@
 import SwiftUI
 import WebKit
 import UIKit
+import ActivityKit
+
+struct LoglistLiveActivityAttributes: ActivityAttributes {
+    struct ContentState: Codable, Hashable {
+        var observedCount: Int
+        var totalCount: Int
+    }
+
+    var listName: String
+}
+
+@MainActor
+final class LiveActivityManager {
+    static let shared = LiveActivityManager()
+
+    private var activity: Activity<LoglistLiveActivityAttributes>?
+
+    func start(listName: String, observedCount: Int, totalCount: Int) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+
+        let attributes = LoglistLiveActivityAttributes(listName: listName)
+        let state = LoglistLiveActivityAttributes.ContentState(
+            observedCount: observedCount,
+            totalCount: totalCount
+        )
+
+        Task {
+            if let existingActivity = Activity<LoglistLiveActivityAttributes>.activities.first {
+                activity = existingActivity
+                await existingActivity.update(
+                    ActivityContent(state: state, staleDate: nil)
+                )
+                return
+            }
+
+            do {
+                activity = try Activity.request(
+                    attributes: attributes,
+                    content: ActivityContent(state: state, staleDate: nil),
+                    pushType: nil
+                )
+            } catch {
+                print("Failed to start live activity: \(error)")
+            }
+        }
+    }
+
+    func update(observedCount: Int, totalCount: Int) {
+        guard let activity = activity ?? Activity<LoglistLiveActivityAttributes>.activities.first else {
+            return
+        }
+        self.activity = activity
+        let state = LoglistLiveActivityAttributes.ContentState(
+            observedCount: observedCount,
+            totalCount: totalCount
+        )
+
+        Task {
+            await activity.update(ActivityContent(state: state, staleDate: nil))
+        }
+    }
+
+    func end() {
+        guard let activity = activity ?? Activity<LoglistLiveActivityAttributes>.activities.first else {
+            return
+        }
+        self.activity = nil
+
+        Task {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+    }
+}
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -53,6 +126,10 @@ private struct LoglistWebView: UIViewRepresentable {
             context.coordinator,
             name: "shareSession"
         )
+        configuration.userContentController.add(
+            context.coordinator,
+            name: "liveActivity"
+        )
 
         let webView = WKWebView(
             frame: .zero,
@@ -82,6 +159,33 @@ private struct LoglistWebView: UIViewRepresentable {
                 let payload = message.body as? [String: Any],
                 let csv = payload["csv"] as? String
             else {
+                if message.name == "liveActivity",
+                   let payload = message.body as? [String: Any],
+                   let action = payload["action"] as? String {
+                    let observedCount = payload["observedCount"] as? Int ?? 0
+                    let totalCount = payload["totalCount"] as? Int ?? 0
+                    let listName = payload["listName"] as? String ?? "Loglist"
+
+                    Task { @MainActor in
+                        switch action {
+                        case "start":
+                            LiveActivityManager.shared.start(
+                                listName: listName,
+                                observedCount: observedCount,
+                                totalCount: totalCount
+                            )
+                        case "update":
+                            LiveActivityManager.shared.update(
+                                observedCount: observedCount,
+                                totalCount: totalCount
+                            )
+                        case "end":
+                            LiveActivityManager.shared.end()
+                        default:
+                            break
+                        }
+                    }
+                }
                 return
             }
 

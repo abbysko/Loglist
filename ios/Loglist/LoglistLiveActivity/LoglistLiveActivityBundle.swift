@@ -11,7 +11,6 @@ import SwiftUI
 @main
 struct LoglistLiveActivityBundle: WidgetBundle {
     var body: some Widget {
-        LoglistLiveActivity()
         LoglistLiveActivityLiveActivity()
     }
 }
