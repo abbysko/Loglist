@@ -18,11 +18,10 @@ struct LoglistLiveActivityAttributes: ActivityAttributes {
     var listName: String
 }
 
-struct LoglistLiveActivityLiveActivity: Widget {
-    @ViewBuilder
-    private func activitySummary(
-        context: ActivityViewContext<LoglistLiveActivityAttributes>
-    ) -> some View {
+private struct LoglistActivitySummaryView: View {
+    let listName: String
+
+    var body: some View {
         HStack(spacing: 12) {
             Image("SmallLogo")
                 .resizable()
@@ -37,22 +36,63 @@ struct LoglistLiveActivityLiveActivity: Widget {
                     .font(.headline)
                     .lineLimit(1)
 
-                Text("Tracking items from \(context.attributes.listName)")
+                Text("Tracking items from \(listName)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
     }
+}
 
+private struct LoglistActivityLockScreenContent: View {
+    @Environment(\.activityFamily) private var activityFamily
+
+    let listName: String
+
+    var body: some View {
+
+        // WatchOS uses activityFamily small
+        if activityFamily == .small {
+            HStack(spacing: 8) {
+                Image("WatchLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    )
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Finish logging?")
+                        .font(.caption2.weight(.semibold))
+                        .lineLimit(1)
+
+                    Text(listName)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+        } else {
+            LoglistActivitySummaryView(listName: listName)
+        }
+    }
+}
+
+struct LoglistLiveActivityLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LoglistLiveActivityAttributes.self) { context in
-            activitySummary(context: context)
-
+            LoglistActivityLockScreenContent(listName: context.attributes.listName)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.bottom) {
-                    activitySummary(context: context)
+                    LoglistActivitySummaryView(listName: context.attributes.listName)
                 }
             } compactLeading: {
                 HStack(spacing: 4) {
@@ -81,6 +121,7 @@ struct LoglistLiveActivityLiveActivity: Widget {
             }
             .keylineTint(.accentColor)
         }
+        .supplementalActivityFamilies([.small])
     }
 }
 
