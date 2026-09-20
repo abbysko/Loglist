@@ -117,8 +117,6 @@ h1 {
 }
 .app-store-badge {
   display: inline-flex;
-  cursor: not-allowed;
-  opacity: 0.65;
 }
 .app-store-badge img {
   display: block;

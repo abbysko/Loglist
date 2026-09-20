@@ -1,6 +1,6 @@
 # Loglist
 
-Loglist is an offline-first iPhone-focused app (developed browser-first) for recording observations from arbitrary lists.
+Loglist is browser-first app available on iOS for recording observations from arbitrary lists.
 
 This repository contains:
 
